@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  php74:
+    build: 
+      context: .
+      dockerfile: ./bin/php74/Dockerfile
+    container_name: 'lamp_php_74'
+    restart: 'always'
+    ports:
+      - "80:80"
+    links: 
+      - mysql
+    volumes: 
+      - ./www/php74:/var/www/html
+      - ./config/php/php.ini:/usr/local/etc/php/php.ini
+      - ./config/vhosts/php74:/etc/apache2/sites-enabled
+      - ./logs/apache2/php74:/var/log/apache2
+    environment:
+      APACHE_DOCUMENT_ROOT: /var/www/html
+      PMA_PORT: '8080'
+      MYSQL_ROOT_PASSWORD: bastomi
+      
+  php80:
+    build: 
+      context: .
+      dockerfile: ./bin/php80/Dockerfile
+    container_name: 'lamp_php_80'
+    restart: 'always'
+    ports:
+      - "81:80"
+    links: 
+      - mysql
+    volumes: 
+      - ./www/php80:/var/www/html/
+      - ./config/php/php.ini:/usr/local/etc/php/php.ini
+      - ./config/vhosts/php80:/etc/apache2/sites-enabled
+      - ./logs/apache2/php80:/var/log/apache2
+    environment:
+      APACHE_DOCUMENT_ROOT: /var/www/html
+      PMA_PORT: '8080'
+      MYSQL_ROOT_PASSWORD: bastomi
+      
+  mysql:
+    image: mysql
+    container_name: 'database_mysql'
+    command: --default-authentication-plugin=mysql_native_password --innodb-use-native-aio=0
+    restart: 'always'
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes: 
+      - ./config/initdb:/docker-entrypoint-initdb.d
+      - ./data/mysql:/var/lib/mysql
+      - ./logs/mysql:/var/log/mysql
+    environment:  
+      MYSQL_ROOT_PASSWORD: bastomi
+      MYSQL_USER: bastomi
+      MYSQL_PASSWORD: bastomi
+      
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: 'phpmyadmin'
+    restart: 'always'
+    links:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: bastomi
+      MYSQL_ROOT_PASSWORD: bastomi
+      UPLOAD_LIMIT: 10000M
+      MEMORY_LIMIT: 10000M
+    ports:
+      - '8080:80'
+    volumes: 
+      - /sessions
+      - ./config/php/php.ini:/usr/local/etc/php/conf.d/php-phpmyadmin.ini
